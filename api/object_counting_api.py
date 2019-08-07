@@ -74,7 +74,7 @@ def custom_counting(input_video, detection_graph, category_index, is_color_recog
             # for all the frames that are extracted from input video
             #street_record is a csv with the measured number of bicycles, motorcycles,
             #,and person each ten seconds. 
-            with open('./fullstreet4.csv', mode='w') as street_file:
+            with open('./fullstreet5.csv', mode='w') as street_file:
                 street_writer = csv.writer(street_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 street_writer.writerow(['time','bicycles' ,'motorcycles', 'redbus','taxi'])
                 print("csv changing")
