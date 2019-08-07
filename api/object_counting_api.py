@@ -14,7 +14,17 @@ import ast
 total_passed_vehicle = 0  # using it to count vehicles
 
 #custom_couting is used for narino specific ocunting metrics
-def custom_counting(input_video, detection_graph, category_index, is_color_recognition_enabled,targeted_objects, fps, width, height):
+#input_video video inn .mp4 or .mov to use in counting
+#detection_graph model generated from inference_graph see countexample.py
+#category_index index of categories generated from labelmap.pbtxt see countexample.py
+#is_color_recognition_enabled  1 if you would like model to consider color in classification 0 otherwise
+#targeted_objects list of objects you wish to count ie ["redbus","taxi"]
+#fps fps of video 
+#width of video frame in pixels
+#height of video frame in pixel
+#roi region of interest vertical line between 0 and width, objects will only be counted inside roi
+#deviation is constant that represents counting area
+def custom_counting(input_video, detection_graph, category_index, is_color_recognition_enabled,targeted_objects, fps, width, height,roi=0,deviation=1):
         #open up video and analyse video using cv2
         cap = cv2.VideoCapture(input_video)
         
@@ -37,8 +47,11 @@ def custom_counting(input_video, detection_graph, category_index, is_color_recog
         #false negatives 
         threshold = 0.5
         
-        #number of seconds between sample
-        samp_rate = 10
+        #number of seconds between sample from video 
+        secsample = 1
+        
+        #number of frames read 
+        frame_numb = 0
         
         with detection_graph.as_default():
           with tf.Session(graph=detection_graph) as sess:
@@ -61,88 +74,160 @@ def custom_counting(input_video, detection_graph, category_index, is_color_recog
             # for all the frames that are extracted from input video
             #street_record is a csv with the measured number of bicycles, motorcycles,
             #,and person each ten seconds. 
-            with open('./street_record.csv', mode='a') as street_file:
+            with open('./fullstreet4.csv', mode='w') as street_file:
                 street_writer = csv.writer(street_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                street_writer.writerow(['bicycles' ,'motorcycles', 'person'])
+                street_writer.writerow(['time','bicycles' ,'motorcycles', 'redbus','taxi'])
+                print("csv changing")
                 framecount = 0
                 while(cap.isOpened()):
                     #open up frame for cv2 to read
-                    ret, frame = cap.read()                
-    
+                    ret, frame = cap.read()    
+                    
+                    #dimension changes
+                    input_frame = frame
+
+                    # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
+                    image_np_expanded = np.expand_dims(input_frame, axis=0)
+                    
+                    
                     if not  ret:
                         print("end of the video file...")
                         break
                     #include time condition
                     fps = int(cap.get(cv2.CAP_PROP_FPS))
-                    
-                    if framecount%(samp_rate*fps) == 0 :
+                    #choose method of sampling per frame or per certain period of time
+                    #samp = secsample*fps #time based method 
+                    samp = 1 #sample every ten frames
+                    if framecount%(samp) == 0 :
                             numb_bicycles = 0 #number of bicycles detected
-                            numb_person = 0 #number of persons detected
                             numb_motorcyles = 0 #number of motorcycles detected 
-                            street_writer.writerow([str(numb_bicycles),str(numb_motorcyles),str(numb_person)])
-                            ts = time.gmtime()
-                            print(time.strftime("%Y-%m-%d %H:%M:%S", ts))
-                            input_frame = frame
-                            street_writer.writerow([time.strftime("%Y-%m-%d %H:%M:%S", ts),str(numb_bicycles),str(numb_motorcyles),str(numb_person)])
+                            numb_redbus = 0 # number of redbusses detected
+                            numb_taxis = 0 # number of taxis detected
+                            
                             # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-                            image_np_expanded = np.expand_dims(input_frame, axis=0)
+                            #image_np_expanded = np.expand_dims(input_frame, axis=0)
         
                             # Actual detection.
                             (boxes, scores, classes, num) = sess.run(
                                             [detection_boxes, detection_scores, detection_classes, num_detections],
                                             feed_dict={image_tensor: image_np_expanded})
         
-        
-                            counter, csv_line, counting_mode = vis_util.visualize_boxes_and_labels_on_image_array(cap.get(1),
-                                                                                                          input_frame,
-                                                                                                          1,
-                                                                                                          is_color_recognition_enabled,
-                                                                                                          np.squeeze(boxes),
-                                                                                                          np.squeeze(classes).astype(np.int32),
-                                                                                                          np.squeeze(scores),
-                                                                                                          category_index,
-                                                                                                          targeted_objects=targeted_objects,
-                                                                                                          use_normalized_coordinates=True,
-                                                                                                          min_score_thresh=threshold,
-                                                                                                          line_thickness=4)
+                            # insert information text to video frame
+                            font = cv2.FONT_HERSHEY_SIMPLEX
                             
-                            numb_bicycles = 0
-                            numb_person = 0
-                            numb_motorcyles = 0
-            
-                            counting_mode  = ast.literal_eval(counting_mode)
-                            if 'person:' in counting_mode.keys():
-                                print(counting_mode['person:'])
-                                numb_person = counting_mode['person:']
+                            
+                        
+                            # Visualization of the results of a detection.        
+                            counter, csv_line, counting_mode = vis_util.visualize_boxes_and_labels_on_image_array(cap.get(1),
+                                                                                                                         input_frame,
+                                                                                                                         1,
+                                                                                                                         is_color_recognition_enabled,
+                                                                                                                         np.squeeze(boxes),
+                                                                                                                         np.squeeze(classes).astype(np.int32),
+                                                                                                                         np.squeeze(scores),
+                                                                                                                         category_index,
+                                                                                                                         y_reference = roi,
+                                                                                                                         deviation = deviation,
+                                                                                                                         use_normalized_coordinates=True,
+                                                                                                                         line_thickness=4)
+                            
+                            #ROI features
+                            # when the vehicle passed over line and counted, make the color of ROI line green
+    
+                            if counter == 1:                  
+                                cv2.line(input_frame, (0, roi), (width, roi), (0, 0xFF, 0), 5)
                             else:
-                                print("not in dict")
+                                cv2.line(input_frame, (0, roi), (width, roi), (0, 0, 0xFF), 5)
+                
+                            #total_passed_vehicle = total_passed_vehicle + counter
+                            
+                            # adding informative text in frame
+                            if(len(counting_mode) == 0):
+                                    cv2.putText(input_frame, "...", (10, 35), font, 0.8, (0,255,255),2,cv2.FONT_HERSHEY_SIMPLEX)                       
+                            else:
+                                    cv2.putText(input_frame, counting_mode, (10, 35), font, 0.8, (0,255,255),2,cv2.FONT_HERSHEY_SIMPLEX)
+                                    
+                            #adjust frame output
+                            """font = cv2.FONT_HERSHEY_SIMPLEX
+                            cv2.putText(
+                                input_frame,
+                                'Detected Vehicles: ' + str(total_passed_vehicle),
+                                (10, 35),
+                                font,
+                                0.8,
+                                (0, 0xFF, 0xFF),
+                                2,
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                )"""
+                            
+                            cv2.putText(
+                                input_frame,
+                                'ROI Line',
+                                (545, roi-10),
+                                font,
+                                0.6,
+                                (0, 0, 0xFF),
+                                2,
+                                cv2.LINE_AA,
+                                )
+
+                            
+                            
+                            
+                            
+                    
+                        
+                        
+                            #connvert counting mode to dict 
+                            #use dict to retrieve relevant categories
+                            counting_mode  = ast.literal_eval(counting_mode)
+                            if 'bicycle:' in counting_mode.keys():
+                                numb_bicycles = counting_mode['bicycle:']
+                                print(str(numb_bicycles)+"b")
+                            else:
+                                print("bike not in dict")
+                                
+                            if 'motorcycle:' in counting_mode.keys():
+                                numb_motorcycles = counting_mode['motorcycle:']
+                                print(str(numb_motorcycles)+"m")
+                            else:
+                                print("motorcycle not in dict")
+                            
+                            if 'taxi:' in counting_mode.keys():
+                                numb_taxis = counting_mode['taxi:']
+                                print(str(numb_taxis)+"t")
+                            else:
+                                print("taxi not in dict")
+                            
+                            if 'redbus:' in counting_mode.keys():
+                                numb_redbus = counting_mode['redbus:']
+                                print(str(numb_redbus)+"r")
+                            else:
+                                print("redbus not in dict")
+                            
+                            
+                            #print time in csv
+                            ts = time.gmtime()
+                            print(time.strftime("%Y-%m-%d %H:%M:%S", ts))
+                            #input_frame = frame
+                            #print time and number of objectss
+                            street_writer.writerow([time.strftime("%Y-%m-%d %H:%M:%S", ts),str(numb_bicycles),str(numb_motorcyles),str(numb_redbus),str(numb_taxis)])
                                 
                             #enable following code if you would like video footage 
                             output_movie.write(input_frame)
-                            print ("writing frame")
                 
                             
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         break
-                framecount+=1   
+                    framecount+=1
+                    print(framecount)
                 
                 
                 cap.release()
                 cv2.destroyAllWindows()
+                street_file.close()
                 
                 
-                
-            
-            
-  #print(counting_mode)
-                            #alternative counting mode
-                            #need to limit scores on boxes
-                            #need to convert ids to types 
-                            #need to count types in only the target types 
-                            #print ([category_index.get(value) for index,value in enumerate(classes[0]) if scores[0,index] > 0.5])
-    
-                            #threshold = 0.5 # in order to get higher percentages you need to lower this number; usually at 0.01 you get 100% predicted objects
-                            #print(len(np.where(scores[0] > threshold)[0])/num_detections[0])           
             
             
             

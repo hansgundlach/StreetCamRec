@@ -591,6 +591,7 @@ def visualize_boxes_and_labels_on_image_array(current_frame_number,
         csv_line_util = class_name + "," + csv_line 
 
   if(mode == 1):
+    #counting mode change for easier dictionary axis
     #interetobj = []
     print(counting_mode)
     counting_mode = counting_mode.replace("['", " ").replace("']", " ").replace("%", "")
