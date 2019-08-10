@@ -18,7 +18,7 @@ The model was than put into the obje_counting api as part of the tensorflow obje
 The main method built to recognize vehicules is custom counting. Custom counting sample a frame every minute which is fed into the object recognition network where objects are identifed and counted. The results are then written to a csv. 
 
 ## Personal Installation and Use 
-To run StreetCamRec. Install Tensorflow Object Detection Library (https://github.com/tensorflow/models/tree/master/research/object_detection). After Installation of Tensorflow Object Detection Libarary place StreetCamRec inside the object_detectionn folder. 
+To run StreetCamRec. Install Tensorflow Object Detection Library (https://github.com/tensorflow/models/tree/master/research/object_detection). After Installation of Tensorflow Object Detection Libarary place StreetCamRec inside the object_detectionn folder. After running the program a csv is generated with the number of specified vehiculed at each time step (ie 30 seconds). The csv is regenerated after each execution.
 
 Example implementation:
 
@@ -76,8 +76,9 @@ object_counting_api.custom_counting(input_video, detection_graph, category_index
 
 output 
 # the csv output is in this format 
-time, bicycle ,motorcycle, 
-2019-08-09 13:32 1,0,0,0
+#csv is rewritten on each execution
+#time, bicycle ,motorcycle, 
+#2019-08-09 13:32 1,0,0,0
 ```
 ## Extension
 Faster algorithms are availble for object detection. If you would like real-time object_detection consider using YOLO based algorithms. Further, object recognition parameters were set to default feel free to change the custom parameters in api/object_counting.py. For example, boxes are only show with a confidence score over 50%. Score can be changed to increase or decrease the number of boxes albeit with coresponding decreases and increases in accuracy (connfidence score). 
