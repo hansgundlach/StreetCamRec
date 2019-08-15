@@ -82,3 +82,12 @@ output
 ```
 ## Extension
 Faster algorithms are availble for object detection. If you would like real-time object_detection consider using YOLO based algorithms. Further, object recognition parameters were set to default feel free to change the custom parameters in api/object_counting.py. For example, boxes are only show with a confidence score over 50%. Score can be changed to increase or decrease the number of boxes albeit with coresponding decreases and increases in accuracy (connfidence score). 
+
+## Citations and Links 
+The custom object detection network was designed with the help of this tutorial:
+https://github.com/EdjeElectronics/TensorFlow-Object-Detection-API-Tutorial-Train-Multiple-Objects-Windows-10
+
+the vizualisation algotithm makes heavy use of:
+https://github.com/ahmetozlu/tensorflow_object_counting_api
+
+I would like to thank the University of Narino.
