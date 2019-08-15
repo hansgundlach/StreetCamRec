@@ -8,7 +8,9 @@ Data was collected from video cameras from several streets in Pasto. Approximatl
 
 ## Training
 Transfer learning was used to speed the training process. 
-Model was trained using tensorflow ontop of faster_rcnn_incneption_v2_coco_2018_01_28. Faster_RCNN was found to be slower but significantly more accurate than the default ssd_mobilenet_v1_coco_2017_11_17 model. The model was trained for approximatley 10,000 epochs using the default faster_rcnn setting ie adam, etc. Below is an example training image from the training set. 
+Model was first trained using tensorflow ontop of faster_rcnn_incneption_v2_coco_2018_01_28. Faster_RCNN was found to be slower but significantly more accurate than the default ssd_mobilenet_v1_coco_2017_11_17 model. The model was trained for approximatley 10,000 epochs using the default faster_rcnn setting ie adam, etc. The final model is built ontop of faster_rcnn_resnet101_kitti. 
+
+Below is an example training image from the training set. 
 
 ![alt text](https://github.com/hansgundlach/StreetCamRec/blob/master/test_images/image9.jpg)
 
@@ -82,6 +84,8 @@ output
 ```
 ## Extension
 Faster algorithms are availble for object detection. If you would like real-time object_detection consider using YOLO based algorithms. Further, object recognition parameters were set to default feel free to change the custom parameters in api/object_counting.py. For example, boxes are only show with a confidence score over 50%. Score can be changed to increase or decrease the number of boxes albeit with coresponding decreases and increases in accuracy (connfidence score). 
+Not all models were tried. View tensorflow model zoo for faster or possibly more accurate base models. 
+https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md
 
 ## Citations and Links 
 The custom object detection network was designed with the help of this tutorial:
